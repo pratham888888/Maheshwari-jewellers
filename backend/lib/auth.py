@@ -109,7 +109,11 @@ async def set_password(username: str, new_password: str) -> None:
 async def create_session(username: str) -> str:
     token = secrets.token_urlsafe(32)
     await db.sessions.insert_one(
-        {"token": token, "username": username, "created_at": datetime.now(timezone.utc)}
+        {
+            "token": token,
+            "username": normalize_username(username),
+            "created_at": datetime.now(timezone.utc),
+        }
     )
     return token
 

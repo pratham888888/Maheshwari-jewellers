@@ -1,7 +1,7 @@
 """Product image storage — S3-compatible object storage with local filesystem fallback.
 
-Production (Render, etc.): set S3_* env vars (Cloudflare R2 or any S3-compatible API).
-Local development: omit S3_BUCKET_NAME to store under backend/uploads/ and serve via /api/media.
+Production (Render, etc.): set all S3_* env vars (Cloudflare R2 or any S3-compatible API).
+Local development: leave S3_* unset to store under backend/uploads/ and serve via /api/media.
 """
 
 from __future__ import annotations
@@ -17,36 +17,35 @@ UPLOAD_DIR = Path(__file__).parent.parent / "uploads"
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif"}
 MAX_UPLOAD_BYTES = 8 * 1024 * 1024  # 8 MiB
 
+# Required together for object-storage mode (Cloudflare R2 / S3-compatible).
+_S3_REQUIRED = (
+    "S3_ENDPOINT_URL",
+    "S3_ACCESS_KEY_ID",
+    "S3_SECRET_ACCESS_KEY",
+    "S3_BUCKET_NAME",
+    "S3_PUBLIC_BASE_URL",
+)
+
 
 def s3_configured() -> bool:
-    return bool(
-        os.environ.get("S3_BUCKET_NAME")
-        and os.environ.get("S3_ACCESS_KEY_ID")
-        and os.environ.get("S3_SECRET_ACCESS_KEY")
-    )
+    """True only when every R2/S3 setting needed for production uploads is present."""
+    return all((os.environ.get(key) or "").strip() for key in _S3_REQUIRED)
 
 
 def _s3_client():
     import boto3
 
-    kwargs: dict = {
-        "aws_access_key_id": os.environ["S3_ACCESS_KEY_ID"],
-        "aws_secret_access_key": os.environ["S3_SECRET_ACCESS_KEY"],
-        "region_name": os.environ.get("S3_REGION") or "auto",
-    }
-    endpoint = (os.environ.get("S3_ENDPOINT_URL") or "").strip()
-    if endpoint:
-        kwargs["endpoint_url"] = endpoint
-    return boto3.client("s3", **kwargs)
+    return boto3.client(
+        "s3",
+        endpoint_url=os.environ["S3_ENDPOINT_URL"].strip(),
+        aws_access_key_id=os.environ["S3_ACCESS_KEY_ID"].strip(),
+        aws_secret_access_key=os.environ["S3_SECRET_ACCESS_KEY"].strip(),
+        region_name=(os.environ.get("S3_REGION") or "auto").strip() or "auto",
+    )
 
 
 def _public_url_for_key(key: str) -> str:
-    base = (os.environ.get("S3_PUBLIC_BASE_URL") or "").rstrip("/")
-    if not base:
-        raise RuntimeError(
-            "S3_PUBLIC_BASE_URL is required when using object storage "
-            "(e.g. https://pub-xxxx.r2.dev or your custom media domain)."
-        )
+    base = os.environ["S3_PUBLIC_BASE_URL"].strip().rstrip("/")
     return f"{base}/{key.lstrip('/')}"
 
 
@@ -69,19 +68,18 @@ def save_image_bytes(data: bytes, filename: str, content_type: str | None = None
         raise ValueError(f"Unsupported file type: {suffix}")
 
     if s3_configured():
-        key = f"products/{filename}"
-        client = _s3_client()
+        key = f"products/{Path(filename).name}"
         extra: dict = {}
         if content_type:
             extra["ContentType"] = content_type
-        client.put_object(
-            Bucket=os.environ["S3_BUCKET_NAME"],
+        _s3_client().put_object(
+            Bucket=os.environ["S3_BUCKET_NAME"].strip(),
             Key=key,
             Body=data,
             **extra,
         )
         url = _public_url_for_key(key)
-        logger.info("Uploaded image to object storage: %s", key)
+        logger.info("Uploaded image to object storage key=%s", key)
         return url
 
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)

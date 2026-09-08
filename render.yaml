@@ -1,5 +1,6 @@
-# Example Render Blueprint — review and set secrets in the Render dashboard.
-# Do NOT deploy until you have filled in MongoDB Atlas + R2 credentials.
+# Render Blueprint for Maheshwari Jewellers.
+# Fill secrets in the Render dashboard (sync:false). Do not put real credentials here.
+# MongoDB Atlas is external — no Render database service.
 # Docs: https://render.com/docs/blueprint-spec
 
 services:
@@ -16,6 +17,8 @@ services:
       - key: DB_NAME
         value: maheshwari_jewellers
       - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGINS
         sync: false
       - key: ADMIN_USERNAME
         value: admin
@@ -51,5 +54,7 @@ services:
         source: /*
         destination: /index.html
     envVars:
+      - key: NODE_VERSION
+        value: "20"
       - key: VITE_API_URL
         sync: false
