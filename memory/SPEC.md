@@ -13,8 +13,8 @@ Business facts (verified, do not invent more):
 
 ## Stack
 FastAPI + MongoDB (motor) backend; Vite + React 19 + Tailwind v4 + shadcn (base-nova).
-All routes on `api_router` under `/api`. Images stored on disk in `backend/uploads/`,
-served at `GET /api/media/{filename}`.
+All routes on `api_router` under `/api`. Images use S3-compatible object storage when
+`S3_*` env vars are set; otherwise local `backend/uploads/` served at `GET /api/media/{filename}`.
 
 ## Data model (backend/models/catalogue.py ↔ frontend/src/lib/types.ts)
 - `products`: id, name, sku, metal(gold|silver), purity(regular|925|999|24K|22K|18K|14K),

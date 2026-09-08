@@ -10,6 +10,7 @@ import {
   waLink,
 } from "@/lib/site";
 import type { Product } from "@/lib/types";
+import { resolveMediaUrl } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const PLACEHOLDER =
@@ -20,7 +21,7 @@ const PLACEHOLDER =
 
 export default function ProductCard({ product }: { product: Product }) {
   const s = useSettings();
-  const image = product.images[0]?.url ?? PLACEHOLDER;
+  const image = resolveMediaUrl(product.images[0]?.url ?? "") || PLACEHOLDER;
   const purity = PURITY_LABELS[product.purity] ?? product.purity;
 
   return (

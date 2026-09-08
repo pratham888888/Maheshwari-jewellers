@@ -5,7 +5,7 @@ import { ArrowLeft, MapPin, Phone } from "lucide-react";
 import Layout from "@/components/Layout";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { apiGet } from "@/lib/api";
+import { apiGet, resolveMediaUrl } from "@/lib/api";
 import type { Product } from "@/lib/types";
 import {
   AVAILABILITY_LABELS,
@@ -43,7 +43,7 @@ export default function ProductDetail() {
   );
 
   const images = product?.images ?? [];
-  const current = images[active]?.url;
+  const current = images[active] ? resolveMediaUrl(images[active].url) : undefined;
 
   const spec = (label: string, value?: string | null) =>
     value ? (
@@ -131,7 +131,7 @@ export default function ProductDetail() {
                       aria-label={`View image ${i + 1}`}
                       data-testid={`product-thumbnail-${i}`}
                     >
-                      <img src={img.url} alt={img.alt || `${product.name} view ${i + 1}`} className="h-full w-full object-cover" loading="lazy" />
+                      <img src={resolveMediaUrl(img.url)} alt={img.alt || `${product.name} view ${i + 1}`} className="h-full w-full object-cover" loading="lazy" />
                     </button>
                   ))}
                 </div>

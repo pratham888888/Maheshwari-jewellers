@@ -31,6 +31,10 @@ dist/
 dist
 
 # Environment files (comprehensive coverage)
+.env
+.env.*
+!.env.example
+!**/.env.example
 
 *token.json*
 *credentials.json*
@@ -88,7 +92,13 @@ android-sdk/
 .emergent/recordings/
 .env
 .env.*
+!.env.example
+!**/.env.example
 *.env
 credentials.json
 *.key
 .credentials
+
+# Local upload fallback (object storage is used in production)
+backend/uploads/*
+!backend/uploads/.gitkeep

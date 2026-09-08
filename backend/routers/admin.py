@@ -13,12 +13,13 @@ from fastapi.responses import FileResponse
 from lib.auth import (
     COOKIE_NAME,
     create_session,
-    destroy_session,
     require_admin,
+    session_cookie_params,
     set_password,
     verify_credentials,
 )
 from lib.db import db
+from lib.storage import ALLOWED_EXTENSIONS, local_media_path, save_image_bytes
 from models.catalogue import (
     AdminUser,
     Category,
@@ -36,9 +37,6 @@ from routers.catalogue import _aware, build_query, load_settings
 
 router = APIRouter()
 
-UPLOAD_DIR = Path(__file__).parent.parent / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
-
 
 def slugify(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
@@ -52,18 +50,20 @@ async def login(payload: LoginRequest, response: Response):
     if not await verify_credentials(payload.username, payload.password):
         raise HTTPException(status_code=401, detail="Invalid username or password")
     token = await create_session(payload.username)
-    response.set_cookie(
-        COOKIE_NAME, token, httponly=True, samesite="lax", max_age=60 * 60 * 24 * 14, path="/"
-    )
+    response.set_cookie(COOKIE_NAME, token, **session_cookie_params())
     return AdminUser(username=payload.username)
 
 
 @router.post("/auth/logout", response_model=OkResponse)
 async def logout(response: Response, username: str = Depends(require_admin)):
-    from fastapi import Request  # noqa: F401
-
     await db.sessions.delete_many({"username": username})
-    response.delete_cookie(COOKIE_NAME, path="/")
+    params = session_cookie_params()
+    response.delete_cookie(
+        COOKIE_NAME,
+        path=params["path"],
+        samesite=params["samesite"],
+        secure=params["secure"],
+    )
     return OkResponse()
 
 
@@ -82,9 +82,7 @@ async def change_password(
     # Invalidate every existing session, then re-issue one so the caller stays signed in.
     await db.sessions.delete_many({"username": username})
     token = await create_session(username)
-    response.set_cookie(
-        COOKIE_NAME, token, httponly=True, samesite="lax", max_age=60 * 60 * 24 * 14, path="/"
-    )
+    response.set_cookie(COOKIE_NAME, token, **session_cookie_params())
     return OkResponse()
 
 
@@ -195,10 +193,11 @@ async def upload_images(files: list[UploadFile] = File(...), _: str = Depends(re
         if not raw:
             continue
         suffix = Path(upload.filename or "img.jpg").suffix.lower() or ".jpg"
-        if suffix not in {".jpg", ".jpeg", ".png", ".webp", ".gif"}:
+        if suffix not in ALLOWED_EXTENSIONS:
             raise HTTPException(status_code=400, detail=f"Unsupported file type: {suffix}")
         name = f"{uuid.uuid4().hex}{suffix}"
         data = raw
+        content_type = upload.content_type
         try:  # optional downscale keeps the catalogue fast
             from PIL import Image  # type: ignore
 
@@ -211,10 +210,15 @@ async def upload_images(files: list[UploadFile] = File(...), _: str = Depends(re
             img.save(buf, format=fmt, quality=82, optimize=True)
             data = buf.getvalue()
             name = f"{Path(name).stem}{'.png' if fmt == 'PNG' else '.jpg'}"
+            content_type = "image/png" if fmt == "PNG" else "image/jpeg"
         except Exception:
             pass
-        (UPLOAD_DIR / name).write_bytes(data)
-        urls.append(f"/api/media/{name}")
+        try:
+            urls.append(save_image_bytes(data, name, content_type))
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        except Exception as exc:
+            raise HTTPException(status_code=502, detail="Image storage upload failed") from exc
     if not urls:
         raise HTTPException(status_code=400, detail="No files received")
     return UploadResult(urls=urls)
@@ -222,8 +226,8 @@ async def upload_images(files: list[UploadFile] = File(...), _: str = Depends(re
 
 @router.get("/media/{filename}")
 async def get_media(filename: str):
-    safe = Path(filename).name
-    path = UPLOAD_DIR / safe
-    if not path.exists():
+    """Serve locally stored uploads (dev fallback). Object-storage URLs are absolute."""
+    path = local_media_path(filename)
+    if not path:
         raise HTTPException(status_code=404, detail="Image not found")
     return FileResponse(path, headers={"Cache-Control": "public, max-age=31536000"})

@@ -84,19 +84,30 @@ export function Header() {
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[#E8E2D8]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-3">
-          <Link to="/" className="flex items-center gap-2 min-w-0" data-testid="brand-logo-link">
+        <div className="flex items-center h-16 gap-4">
+          <Link
+            to="/"
+            className="flex items-center gap-2 shrink-0 mr-auto"
+            data-testid="brand-logo-link"
+          >
             <Gem className="h-6 w-6 text-[#996515] shrink-0" aria-hidden />
-            <span className="font-heading text-base sm:text-xl tracking-tight text-stone-900 truncate">
+            <span className="font-heading text-base sm:text-xl tracking-tight text-stone-900 whitespace-nowrap">
               {s.business_name}
             </span>
           </Link>
 
-          <nav className="hidden xl:flex items-center gap-5">
+          <nav className="hidden xl:flex items-center gap-3 shrink min-w-0 overflow-x-auto">
             {NAV.map((n) => link(n.to, n.label, "nav"))}
           </nav>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              to="/admin/login"
+              className="hidden xl:inline text-sm text-stone-500 hover:text-[#996515] transition-colors duration-200 whitespace-nowrap"
+              data-testid="nav-admin-desktop"
+            >
+              Admin Login
+            </Link>
             <a
               href={waLink(s.whatsapp, "Hello Maheshwari Jewellers, I would like to enquire about your jewellery.")}
               target="_blank"

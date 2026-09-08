@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import type { Category, ProductInput, UploadResult } from "@/lib/types";
+import { apiUpload, resolveMediaUrl } from "@/lib/api";
 import { PRICE_TYPE_LABELS } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -41,9 +42,7 @@ export default function ProductForm({
     Array.from(files).forEach((f) => form.append("files", f));
     setUploading(true);
     try {
-      const res = await fetch("/api/admin/upload", { method: "POST", body: form });
-      if (!res.ok) throw new Error(String(res.status));
-      const data = (await res.json()) as UploadResult;
+      const data = await apiUpload<UploadResult>("/admin/upload", form);
       onChange({
         ...value,
         images: [...value.images, ...data.urls.map((url) => ({ url, alt: value.name }))],
@@ -225,7 +224,7 @@ export default function ProductForm({
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-3" data-testid="product-form-images">
             {value.images.map((img, i) => (
               <div key={img.url + i} className={cn("relative rounded-lg overflow-hidden border-2", i === 0 ? "border-[#996515]" : "border-[#E8E2D8]")}>
-                <img src={img.url} alt={img.alt || "Product image"} className="aspect-square w-full object-cover" />
+                <img src={resolveMediaUrl(img.url)} alt={img.alt || "Product image"} className="aspect-square w-full object-cover" />
                 {i === 0 && (
                   <span className="absolute top-1 left-1 text-[9px] uppercase font-bold px-1 py-0.5 rounded bg-[#996515] text-white">
                     Primary

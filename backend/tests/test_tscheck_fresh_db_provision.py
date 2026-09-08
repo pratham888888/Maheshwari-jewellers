@@ -10,6 +10,7 @@ import pytest_asyncio
 from motor.motor_asyncio import AsyncIOMotorClient
 
 ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "Mahesh@2026")
+os.environ.setdefault("ADMIN_PASSWORD", ADMIN_PASSWORD)
 TEMP_DB_NAME = "tscheck_fresh_provision_db"
 
 

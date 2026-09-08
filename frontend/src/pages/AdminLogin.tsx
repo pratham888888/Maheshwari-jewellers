@@ -28,8 +28,14 @@ export default function AdminLogin() {
       navigate("/admin");
     },
     onError: (e) => {
-      const detail = e instanceof ApiError ? (e.body as { detail?: string })?.detail : null;
-      setError(detail || "Login failed. Please check your username and password.");
+      if (e instanceof ApiError) {
+        const detail = (e.body as { detail?: string })?.detail;
+        setError(detail || `Login failed (${e.status}). Check username and password.`);
+        return;
+      }
+      setError(
+        "Cannot reach the API. Use http://localhost:5173 (not the LAN IP) and ensure the backend is running.",
+      );
     },
   });
 

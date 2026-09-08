@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import ProductForm from "@/components/ProductForm";
-import { apiDelete, apiGet, apiPost, apiPut, ApiError } from "@/lib/api";
+import { apiDelete, apiGet, apiPost, apiPut, ApiError, resolveMediaUrl } from "@/lib/api";
 import type {
   AdminUser,
   Category,
@@ -248,7 +248,7 @@ export default function Admin() {
                   {items.map((p) => (
                     <div key={p.id} className="bg-white rounded-xl border border-[#E8E2D8] p-3 flex gap-3 items-center" data-testid={`admin-product-row-${p.id}`}>
                       <img
-                        src={p.images[0]?.url ?? ""}
+                        src={resolveMediaUrl(p.images[0]?.url ?? "")}
                         alt={p.name}
                         className="h-16 w-16 rounded-lg object-cover bg-[#F5EFE6] shrink-0"
                       />

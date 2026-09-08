@@ -1,6 +1,7 @@
 """Cookie-session admin auth. Sessions live in Mongo; the cookie is httpOnly."""
 
 import hashlib
+import logging
 import os
 import secrets
 from datetime import datetime, timezone
@@ -9,9 +10,18 @@ from fastapi import Cookie, HTTPException
 
 from lib.db import db
 
+logger = logging.getLogger(__name__)
+
 COOKIE_NAME = "mj_session"
-DEFAULT_ADMIN_USER = os.environ.get("ADMIN_USERNAME", "admin")
-DEFAULT_ADMIN_PASS = os.environ.get("ADMIN_PASSWORD", "Mahesh@2026")
+
+
+def _admin_username() -> str:
+    return os.environ.get("ADMIN_USERNAME", "admin")
+
+
+def _admin_password() -> str | None:
+    # Read at call time so tests / late-loaded env work. Never logged.
+    return os.environ.get("ADMIN_PASSWORD")
 
 
 def hash_password(password: str, salt: str) -> str:
@@ -30,19 +40,49 @@ def normalize_password(password: str) -> str:
     return password.strip()
 
 
+def session_cookie_params() -> dict:
+    """Environment-aware cookie flags for same-origin vs cross-origin (FE/BE split).
+
+    Local same-origin / Vite proxy: COOKIE_SECURE=false, COOKIE_SAMESITE=lax (defaults).
+    Production cross-origin (Render static + API): COOKIE_SECURE=true, COOKIE_SAMESITE=none.
+    Browsers require Secure when SameSite=None.
+    """
+    secure = os.environ.get("COOKIE_SECURE", "false").lower() in ("1", "true", "yes")
+    samesite = (os.environ.get("COOKIE_SAMESITE") or ("none" if secure else "lax")).lower()
+    if samesite not in ("lax", "strict", "none"):
+        samesite = "lax"
+    if samesite == "none":
+        secure = True
+    return {
+        "httponly": True,
+        "samesite": samesite,
+        "secure": secure,
+        "max_age": 60 * 60 * 24 * 14,
+        "path": "/",
+    }
+
+
 async def ensure_default_admin() -> None:
-    username = normalize_username(DEFAULT_ADMIN_USER)
+    """Create the initial admin once. Idempotent — never duplicates accounts."""
+    username = normalize_username(_admin_username())
     existing = await db.admins.find_one({"username": username})
     if existing:
         return
+    password = _admin_password()
+    if not password:
+        raise RuntimeError(
+            "No admin account exists and ADMIN_PASSWORD is not set. "
+            "Set ADMIN_USERNAME and ADMIN_PASSWORD in the environment for initial setup."
+        )
     salt = secrets.token_hex(8)
     await db.admins.insert_one(
         {
             "username": username,
             "salt": salt,
-            "password_hash": hash_password(normalize_password(DEFAULT_ADMIN_PASS), salt),
+            "password_hash": hash_password(normalize_password(password), salt),
         }
     )
+    logger.info("Provisioned initial admin account for username=%s", username)
 
 
 async def verify_credentials(username: str, password: str) -> bool:

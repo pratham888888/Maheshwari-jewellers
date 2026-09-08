@@ -4,7 +4,7 @@ import { MapPin, ArrowRight } from "lucide-react";
 import Layout from "@/components/Layout";
 import ProductCard from "@/components/ProductCard";
 import { buttonVariants } from "@/components/ui/button";
-import { apiGet } from "@/lib/api";
+import { apiGet, resolveMediaUrl } from "@/lib/api";
 import type { ProductPage } from "@/lib/types";
 import { PRICE_NOTE, useSeo, useSettings, waLink } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -42,7 +42,7 @@ export default function Home() {
       {/* Hero */}
       <section className="relative overflow-hidden" data-testid="hero-section">
         <img
-          src={s.banner_url || HERO_IMAGE}
+          src={s.banner_url ? resolveMediaUrl(s.banner_url) : HERO_IMAGE}
           alt="Silver and gold jewellery at Maheshwari Jewellers, Modinagar"
           className="absolute inset-0 h-full w-full object-cover"
         />

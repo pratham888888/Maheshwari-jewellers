@@ -1,6 +1,10 @@
-// Typed fetch layer over the FastAPI backend. Base is the relative "/api" prefix so the
-// same code works in dev (Vite proxies /api → :8001) and behind a single origin in prod.
-const BASE = "/api";
+// Typed fetch layer over the FastAPI backend.
+// Set VITE_API_URL to the backend origin (no trailing slash), e.g. http://localhost:8000
+// In local Vite-only mode (empty VITE_API_URL), requests use relative "/api" and the Vite proxy.
+const API_ORIGIN = String(import.meta.env.VITE_API_URL ?? "")
+  .trim()
+  .replace(/\/$/, "");
+export const BASE = API_ORIGIN ? `${API_ORIGIN}/api` : "/api";
 
 // Fields are declared, not constructor parameter properties: tsconfig sets
 // erasableSyntaxOnly, which rejects `constructor(readonly status: number)`.
@@ -19,9 +23,11 @@ export class ApiError extends Error {
 type JsonBody = unknown;
 
 async function request<T>(method: string, path: string, body?: JsonBody): Promise<T> {
-  // Auth rides the httpOnly session cookie automatically — never add auth headers here.
+  // Auth rides the httpOnly session cookie — credentials must be included for
+  // cross-origin frontend/backend hosting (Render static + API).
   const res = await fetch(`${BASE}${path}`, {
     method,
+    credentials: "include",
     headers: body === undefined ? undefined : { "Content-Type": "application/json" },
     body: body === undefined ? undefined : JSON.stringify(body),
   });
@@ -34,6 +40,32 @@ async function request<T>(method: string, path: string, body?: JsonBody): Promis
 
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
+}
+
+/** Multipart upload helper (admin image upload). Uses the same API base + cookies. */
+export async function apiUpload<T>(path: string, form: FormData): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    credentials: "include",
+    body: form,
+  });
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => null);
+    throw new ApiError(res.status, errBody);
+  }
+  return (await res.json()) as T;
+}
+
+/**
+ * Resolve product image URLs for cross-origin deploys.
+ * Absolute http(s)/data/blob URLs and empty strings are left unchanged;
+ * legacy relative "/api/media/..." paths are prefixed with VITE_API_URL when set.
+ */
+export function resolveMediaUrl(url: string): string {
+  if (!url) return url;
+  if (/^(https?:|data:|blob:)/i.test(url)) return url;
+  if (!API_ORIGIN) return url;
+  return url.startsWith("/") ? `${API_ORIGIN}${url}` : `${API_ORIGIN}/${url}`;
 }
 
 // The response type is yours to declare: nothing infers across the Python boundary, so a
