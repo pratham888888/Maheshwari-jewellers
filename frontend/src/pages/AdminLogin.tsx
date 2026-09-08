@@ -18,7 +18,11 @@ export default function AdminLogin() {
   const [error, setError] = useState("");
 
   const login = useMutation({
-    mutationFn: () => apiPost<AdminUser>("/auth/login", { username, password }),
+    mutationFn: () =>
+      apiPost<AdminUser>("/auth/login", {
+        username: username.trim(),
+        password: password.trim(),
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["me"] });
       navigate("/admin");
@@ -58,6 +62,9 @@ export default function AdminLogin() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 autoComplete="username"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 required
                 data-testid="admin-username-input"
               />

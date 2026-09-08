@@ -18,33 +18,51 @@ def hash_password(password: str, salt: str) -> str:
     return hashlib.sha256((salt + password).encode()).hexdigest()
 
 
+def normalize_username(username: str) -> str:
+    """Usernames are stored and compared lowercase/trimmed: phone keyboards
+    auto-capitalise the first letter, which would otherwise reject a valid login."""
+    return username.strip().lower()
+
+
+def normalize_password(password: str) -> str:
+    """Only surrounding whitespace is stripped — copy-pasting a password very often
+    drags along a trailing space or newline. Inner characters are untouched."""
+    return password.strip()
+
+
 async def ensure_default_admin() -> None:
-    existing = await db.admins.find_one({"username": DEFAULT_ADMIN_USER})
+    username = normalize_username(DEFAULT_ADMIN_USER)
+    existing = await db.admins.find_one({"username": username})
     if existing:
         return
     salt = secrets.token_hex(8)
     await db.admins.insert_one(
         {
-            "username": DEFAULT_ADMIN_USER,
+            "username": username,
             "salt": salt,
-            "password_hash": hash_password(DEFAULT_ADMIN_PASS, salt),
+            "password_hash": hash_password(normalize_password(DEFAULT_ADMIN_PASS), salt),
         }
     )
 
 
 async def verify_credentials(username: str, password: str) -> bool:
-    admin = await db.admins.find_one({"username": username})
+    admin = await db.admins.find_one({"username": normalize_username(username)})
     if not admin:
         return False
-    return hash_password(password, admin["salt"]) == admin["password_hash"]
+    return hash_password(normalize_password(password), admin["salt"]) == admin["password_hash"]
 
 
 async def set_password(username: str, new_password: str) -> None:
     """Rotate an admin password. Only the salted hash is ever stored."""
     salt = secrets.token_hex(8)
     await db.admins.update_one(
-        {"username": username},
-        {"$set": {"salt": salt, "password_hash": hash_password(new_password, salt)}},
+        {"username": normalize_username(username)},
+        {
+            "$set": {
+                "salt": salt,
+                "password_hash": hash_password(normalize_password(new_password), salt),
+            }
+        },
     )
 
 

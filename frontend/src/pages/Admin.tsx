@@ -136,8 +136,8 @@ export default function Admin() {
   const changePassword = useMutation({
     mutationFn: () =>
       apiPost<OkResponse>("/auth/change-password", {
-        current_password: currentPw,
-        new_password: newPw,
+        current_password: currentPw.trim(),
+        new_password: newPw.trim(),
       }),
     onSuccess: () => {
       setCurrentPw("");
@@ -504,7 +504,7 @@ export default function Admin() {
                 </div>
                 <Button
                   className="bg-[#996515] hover:bg-[#7A4D05]"
-                  disabled={changePassword.isPending || !currentPw || newPw.length < 8}
+                  disabled={changePassword.isPending || !currentPw.trim() || newPw.trim().length < 8}
                   onClick={() => changePassword.mutate()}
                   data-testid="admin-change-password-button"
                 >
