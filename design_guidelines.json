@@ -1,0 +1,227 @@
+{
+  "project_name": "Maheshwari Jewellers - Catalogue & Store Portal",
+  "archetype": "ORGANIC & LUXURY WARMTH (Indian Fine Craft & Purity)",
+  "theme_strategy": "Light Warm Ivory & Sandstone Base (#FAF7F2 / #F5EFE6) with Polished Charcoal (#1A1A1A) and Brushed Antique Gold Accents (#B8860B / #996515). Clean, high-trust, mobile-first local store experience.",
+  "colors": {
+    "palette_description": "Soft ivory and warm cream background canvas with pure white elevated product cards, deep charcoal body text, and rich warm gold metallic accents for trust and tradition.",
+    "surfaces": [
+      {
+        "name": "page",
+        "kind": "solid",
+        "bg": "#FAF7F2",
+        "on_bg": "#1F1F1F",
+        "on_bg_muted": "#595959",
+        "roles": {
+          "link": "#8A5A00",
+          "error": "#B91C1C",
+          "success": "#15803D"
+        }
+      },
+      {
+        "name": "panel",
+        "kind": "solid",
+        "bg": "#FFFFFF",
+        "on_bg": "#1A1A1A",
+        "on_bg_muted": "#525252",
+        "roles": {
+          "border": "#E8E2D8",
+          "badge_gold_bg": "#FBF5E8",
+          "badge_gold_text": "#7A4D05",
+          "badge_silver_bg": "#F1F5F9",
+          "badge_silver_text": "#334155"
+        }
+      },
+      {
+        "name": "card_subtle",
+        "kind": "solid",
+        "bg": "#F5EFE6",
+        "on_bg": "#1C1917",
+        "on_bg_muted": "#57534E"
+      },
+      {
+        "name": "inverse_dark",
+        "kind": "solid",
+        "bg": "#1C1917",
+        "on_bg": "#FDFBF7",
+        "on_bg_muted": "#D6D3D1",
+        "roles": {
+          "gold_accent": "#E5C07B",
+          "whatsapp_btn": "#25D366"
+        }
+      },
+      {
+        "name": "rates_ticker_bar",
+        "kind": "solid",
+        "bg": "#F5EAD4",
+        "on_bg": "#45260A",
+        "on_bg_muted": "#6B4423",
+        "roles": {
+          "rate_up": "#15803D",
+          "rate_down": "#B91C1C",
+          "live_indicator": "#D97706"
+        }
+      },
+      {
+        "name": "hero",
+        "kind": "image",
+        "contrast_against": "#261A10",
+        "guarantee": "scrim: linear-gradient(to right, rgba(28,25,23,0.85) 0%, rgba(28,25,23,0.65) 60%, rgba(28,25,23,0.35) 100%)",
+        "on_bg": "#FFFFFF",
+        "on_bg_muted": "#E5E5E5",
+        "roles": {
+          "gold_sparkle": "#F3E5AB",
+          "cta_primary_bg": "#B8860B",
+          "cta_primary_text": "#FFFFFF"
+        }
+      },
+      {
+        "name": "sticky_mobile_dock",
+        "kind": "glass",
+        "contrast_against": "#FAF7F2",
+        "guarantee": "backdrop-blur-md bg-white/95 border-t border-amber-200/60 shadow-lg",
+        "on_bg": "#1A1A1A",
+        "on_bg_muted": "#525252"
+      }
+    ],
+    "accent": "#996515",
+    "on_accent": "#FFFFFF",
+    "whatsapp_green": "#25D366",
+    "on_whatsapp": "#FFFFFF"
+  },
+  "typography": {
+    "heading_font": "Playfair Display Variable, Georgia, serif",
+    "body_font": "Plus Jakarta Sans Variable, -apple-system, sans-serif",
+    "accent_font": "Lora Variable, serif",
+    "css_import_heading": "@import \"@fontsource-variable/playfair-display\";",
+    "css_import_body": "@import \"@fontsource-variable/plus-jakarta-sans\";",
+    "scale_px": {
+      "display": 56,
+      "h1": 44,
+      "h2": 32,
+      "h3": 22,
+      "body": 16,
+      "caption": 14
+    },
+    "letter_spacing": {
+      "headings": "tracking-tight",
+      "overlines": "tracking-[0.18em] uppercase text-xs font-semibold",
+      "body": "tracking-normal leading-relaxed"
+    }
+  },
+  "entry_surfaces": {
+    "/": "split hero — brand identity 'MAHESHWARI JEWELLERS', brand line 'Tradition • Purity • Trust', quick contact CTAs (Explore, WhatsApp, Directions) on left, curated jewellery showcase carousel on right, followed by Today's Rate Strip",
+    "/catalogue": "warm ivory filter panel on left/top with metal/purity tabs (Silver, 925, 999, Gold) + active search, rendering a responsive product card grid",
+    "/product/:id": "2-column product showcase — high-res zoomable image gallery on left, metal purity, weight, pricing info, and 1-click WhatsApp enquiry on right",
+    "/about": "editorial storytelling layout with heritage timeline, purity testing assurance, Modinagar store location photos and owner note",
+    "/contact": "store details hero with direct Call, WhatsApp buttons, Google Maps embed, address and business hours",
+    "/admin/login": "clean branded login card with security badges and direct admin credentials",
+    "/admin": "high-density management dashboard with rate editor, catalogue inventory CRUD, image manager, and store settings"
+  },
+  "grids_and_layouts": {
+    "mobile_first_rules": "Mandatory sticky bottom quick-action bar for mobile (Call, WhatsApp, Get Directions, Browse Catalogue). Touch targets >= 44px.",
+    "container_max_width": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8",
+    "product_grid": "grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6",
+    "category_grid": "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4",
+    "rates_ticker": "flex items-center justify-between overflow-x-auto py-2.5 px-4 bg-[#F5EAD4] border-y border-[#E2D2B3]"
+  },
+  "visual_enhancers": {
+    "card_style": "bg-white rounded-xl border border-[#E8E2D8] shadow-xs hover:shadow-md transition-all duration-300 overflow-hidden",
+    "gold_badge": "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#FBF5E8] text-[#7A4D05] border border-[#EADBBD]",
+    "silver_badge": "inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F1F5F9] text-[#334155] border border-[#CBD5E1]",
+    "purity_pill": "text-[11px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded bg-[#FAF7F2] text-[#44403C] border border-[#E7E5E4]",
+    "demo_tag": "inline-flex items-center text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300"
+  },
+  "motion": {
+    "page_transitions": "opacity 0.25s ease-in-out, transform 0.25s ease-out",
+    "hover_lift": "hover:-translate-y-1 transition-transform duration-200",
+    "carousel_scroll": "smooth momentum scroll with snap-start on mobile",
+    "respect_reduced_motion": "Wrap non-essential motion in prefers-reduced-motion queries"
+  },
+  "accessibility": {
+    "contrast_standard": "WCAG AA (4.5:1 for body and labels, 3:1 for large display headers)",
+    "screen_reader": "Explicit aria-labels on all icon buttons (WhatsApp, Call, Search, Close, Hamburger)",
+    "focus_states": "focus:ring-2 focus:ring-[#B8860B] focus:ring-offset-2 outline-none",
+    "test_attributes": "All key buttons, links, inputs, filters, and cards MUST include role-based data-testid attributes (e.g., data-testid=\"whatsapp-header-btn\", data-testid=\"product-card-1\", data-testid=\"filter-metal-silver\")"
+  },
+  "image_urls": {
+    "silver_jewellery": [
+      {
+        "image_url": "https://images.unsplash.com/photo-1697713465161-d872b22723a2?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHw0fHxzaWx2ZXIlMjBqZXdlbGxlcnklMjBuZWNrbGFjZSUyMHJpbmdzJTIwZWFycmluZ3N8ZW58MHx8fHwxNzg4ODcyNTgyfDA&ixlib=rb-4.1.0&q=85",
+        "description": "Silver necklace with designer stone pendant and matching ring set",
+        "category": "silver_jewellery_featured"
+      },
+      {
+        "image_url": "https://images.unsplash.com/photo-1583937443566-6fe1a1c6e400?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwzfHxzaWx2ZXIlMjBqZXdlbGxlcnklMjBuZWNrbGFjZSUyMHJpbmdzJTIwZWFycmluZ3N8ZW58MHx8fHwxNzg4ODcyNTgyfDA&ixlib=rb-4.1.0&q=85",
+        "description": "925 sterling silver diamond-studded floral band ring",
+        "category": "silver_925_rings"
+      },
+      {
+        "image_url": "https://images.unsplash.com/photo-1744822220368-c380740bfc7f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwyfHxzaWx2ZXIlMjBqZXdlbGxlcnklMjBuZWNrbGFjZSUyMHJpbmdzJTIwZWFycmluZ3N8ZW58MHx8fHwxNzg4ODcyNTgyfDA&ixlib=rb-4.1.0&q=85",
+        "description": "Sterling silver emerald-studded bridal necklace and earring collection",
+        "category": "silver_bridal_women"
+      },
+      {
+        "image_url": "https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMjV8MHwxfHNlYXJjaHwxfHxzaWx2ZXIlMjBqZXdlbGxlcnklMjBuZWNrbGFjZSUyMHJpbmdzJTIwZWFycmluZ3N8ZW58MHx8fHwxNzg4ODcyNTgyfDA&ixlib=rb-4.1.0&q=85",
+        "description": "Assorted handcrafted silver chains, hoops, and daily wear bangles",
+        "category": "silver_dailywear"
+      }
+    ],
+    "gold_jewellery": [
+      {
+        "image_url": "https://images.unsplash.com/photo-1651160670627-2896ddf7822f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwyfHxnb2xkJTIwamV3ZWxsZXJ5JTIwaW5kaWFuJTIwdHJhZGl0aW9uYWwlMjByaW5nJTIwYmFuZ2xlfGVufDB8fHx8MTc4ODg3MjU4Mnww&ixlib=rb-4.1.0&q=85",
+        "description": "Intricate 22k gold traditional Indian jhumka earrings with paisley filigree",
+        "category": "gold_traditional_earrings"
+      },
+      {
+        "image_url": "https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwxfHxnb2xkJTIwamV3ZWxsZXJ5JTIwaW5kaWFuJTIwdHJhZGl0aW9uYWwlMjByaW5nJTIwYmFuZ2xlfGVufDB8fHx8MTc4ODg3MjU4Mnww&ixlib=rb-4.1.0&q=85",
+        "description": "Heritage 22k gold royal choker necklace with ruby embellishments",
+        "category": "gold_bridal_necklace"
+      },
+      {
+        "image_url": "https://images.unsplash.com/photo-1721807644561-9efcabee5c42?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwzfHxnb2xkJTIwamV3ZWxsZXJ5JTIwaW5kaWFuJTIwdHJhZGl0aW9uYWwlMjByaW5nJTIwYmFuZ2xlfGVufDB8fHx8MTc4ODg3MjU4Mnww&ixlib=rb-4.1.0&q=85",
+        "description": "Multi-tier gold necklace and matching bangles set on stone",
+        "category": "gold_festive_collection"
+      }
+    ],
+    "silver_999_bars_coins": [
+      {
+        "image_url": "https://images.unsplash.com/photo-1720637594911-fb18f28eb913?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTF8MHwxfHNlYXJjaHw0fHxzaWx2ZXIlMjBjb2lucyUyMGJhcnMlMjA5OTklMjA5MjUlMjBqZXdlbHJ5fGVufDB8fHx8MTc4ODg3MjU4Mnww&ixlib=rb-4.1.0&q=85",
+        "description": "Certified 999 fine silver minted bars stack with hallmark engraving",
+        "category": "silver_999_bars"
+      },
+      {
+        "image_url": "https://images.unsplash.com/photo-1707783764111-502472d31ace?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTF8MHwxfHNlYXJjaHwyfHxzaWx2ZXIlMjBjb2lucyUyMGJhcnMlMjA5OTklMjA5MjUlMjBqZXdlbHJ5fGVufDB8fHx8MTc4ODg3MjU4Mnww&ixlib=rb-4.1.0&q=85",
+        "description": "Pure silver bars in various denominations (50g, 100g, 250g, 500g, 1kg)",
+        "category": "silver_investment_ingots"
+      },
+      {
+        "image_url": "https://images.unsplash.com/photo-1623743558917-37d9ab9e3b34?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2OTF8MHwxfHNlYXJjaHwzfHxzaWx2ZXIlMjBjb2lucyUyMGJhcnMlMjA5OTklMjA5MjUlMjBqZXdlbHJ5fGVufDB8fHx8MTc4ODg3MjU4Mnww&ixlib=rb-4.1.0&q=85",
+        "description": "999 pure silver coins for gifting, puja, Diwali, and Dhanteras",
+        "category": "silver_999_pooja_coins"
+      }
+    ]
+  },
+  "business_info": {
+    "store_name": "Maheshwari Jewellers",
+    "tagline": "Tradition • Purity • Trust",
+    "location": "Modinagar, Uttar Pradesh, India",
+    "phone": "8477950556",
+    "whatsapp": "+918477950556",
+    "google_maps_url": "https://maps.app.goo.gl/oWX8MP7Jm5HNGFD56?g_st=ac",
+    "whatsapp_message_templates": {
+      "product_enquiry": "Namaste Maheshwari Jewellers, I am interested in *{product_name}* (Purity: {purity}, Code: {code}). Please let me know the current price and availability.",
+      "rate_enquiry": "Namaste, what are today's silver and gold rates per gram at your Modinagar store?",
+      "custom_order": "Namaste, I want to inquire about custom silver/gold jewellery making."
+    }
+  },
+  "instructions_to_main_agent": {
+    "1_core_architecture": "Build a FastAPI + React 19 single-page catalogue with full-stack capabilities. Frontend routes: Home (/), Catalogue (/catalogue), Category views (/category/:slug), Product Detail (/product/:id), Today's Rates (/rates), About (/about), Contact (/contact), Admin Login (/admin/login), Admin Panel (/admin).",
+    "2_mobile_first_design": "Most visitors will click from Google Maps on Android phones. Provide a dedicated fixed bottom dock on mobile screens with Quick Call, WhatsApp Chat, and Directions buttons. Keep touch targets roomy and filter drawers easy to toggle.",
+    "3_today_rates_strip": "Render an interactive and editable 'Today's Gold & Silver Rates' ticker on the homepage and header. Admin must be able to update live rates (Gold 24K, Gold 22K, Silver 999, Silver 925 per 10g/1g) from the admin panel.",
+    "4_catalogue_features": "Filterable by Metal (Silver, Gold), Purity (925 Sterling, 999 Fine, 22K, 18K, Regular Silver), Gender (Women's, Men's, Unisex), Category (Rings, Chains, Payal/Anklets, Bangles, Necklaces, Utensils/Pooja, Coins & Bars), and Price/Availability. Include instant search and sort by weight/newest.",
+    "5_product_card_and_detail": "Product card shows image thumbnail, clear DEMO badge (for mock items), purity tag, gross/net weight in grams, price or 'Contact for Today's Price', and 2 quick actions: 'View Details' and 'WhatsApp Enquiry' (with pre-filled product name and code). Detail page includes multi-image zoom, metal specifications, purity guarantee, and direct call/WhatsApp buttons.",
+    "6_admin_panel": "Secure admin panel with credentials support. Capabilities: Add/Edit/Delete products with multiple image URLs/upload, toggle featured/new arrivals, update daily bullion rates, manage custom categories, and update store contact details.",
+    "7_styling_and_feel": "Warm ivory background (#FAF7F2), white rounded cards, subtle gold accents, charcoal text. Do NOT make it look like a sterile high-tech SaaS or a flashy crypto dashboard. It must feel like an authentic, highly respected local Indian family jeweller known for pure silver and trusted gold.",
+    "8_testing_data_ids": "Ensure all interactive elements have data-testid attributes (e.g., data-testid='catalogue-filter-silver', data-testid='whatsapp-inquiry-btn', data-testid='admin-rates-update-btn')."
+  }
+}

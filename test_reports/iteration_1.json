@@ -1,0 +1,109 @@
+{
+  "iteration": 1,
+  "summary": "All 8 acceptance-matrix criteria exercised: 6 backend test files (9 tests) + 7 browser checks, all passing. No bugs found.",
+  "passed": 15,
+  "failed": 0,
+  "bugs": [],
+  "action_items": [],
+  "retest_needed": false,
+  "checks": [
+    {
+      "criterion": "Phone/WhatsApp number 9837149835 everywhere, old number 8477950556 absent.",
+      "name": "test_settings_business_info (test_tscheck_business_settings.py)",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "GET /api/settings 200: phone=9837149835, whatsapp=919837149835, maps_url matches; '8477950556' not present in payload."
+    },
+    {
+      "criterion": "Phone/WhatsApp number 9837149835 everywhere, old number 8477950556 absent.",
+      "name": "phone-whatsapp-consistent-everywhere",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Checked home, catalogue, about, contact, product detail (mobile 390x844): every tel: href == tel:+919837149835, every wa.me href starts with https://wa.me/919837149835, '8477950556' absent from rendered HTML on all 5 pages."
+    },
+    {
+      "criterion": "Shop timings show 10AM-8PM for 6 days, Closed for Tuesday, on /contact and footer.",
+      "name": "shop-timings-correct",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "On /contact (mobile viewport) all of hours-monday/wednesday/thursday/friday/saturday/sunday contained '10:00 AM' and '8:00 PM'; hours-closed-tuesday contained 'Closed' and not '10:00 AM'. Footer (site-footer) on home page showed same via scoped testids."
+    },
+    {
+      "criterion": "WhatsApp product enquiry pre-fills product name, SKU/ID and weight.",
+      "name": "whatsapp-enquiry-prefills-product-details",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Catalogue card whatsapp-enquiry-{id} href decoded to include product name fragment and weight, plus 'price'/'availability' wording; product detail testid product-whatsapp-enquiry href decoded similarly (e.g. '...I am interested in DEMO Gold Ring \u2013 22K, Product ID DEMO-GR-22K, Weight 3.1 g. Please share the latest price and availability.')."
+    },
+    {
+      "criterion": "Admin login works with admin/Mahesh@2026; admin area unreachable without auth.",
+      "name": "test_admin_products_requires_auth / test_login_wrong_password_rejected / test_login_correct_password_grants_access (test_tscheck_admin_auth.py)",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "GET /api/admin/products with no cookie -> 401. POST /api/auth/login wrong password -> 401, no mj_session cookie set. POST /api/auth/login correct creds -> 200 + mj_session cookie; GET /api/auth/me -> 200 username=admin; GET /api/admin/products -> 200."
+    },
+    {
+      "criterion": "Admin login works with admin/Mahesh@2026; admin area unreachable without auth.",
+      "name": "admin-login-and-auth-guard",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Fresh visit to /admin redirected to /admin/login. Wrong password kept user on login page with visible inline error text. Correct credentials navigated to /admin and rendered tab-dashboard/tab-products/tab-categories/tab-rates/tab-settings."
+    },
+    {
+      "criterion": "Admin can create a product, edit name/description/price/category, change visible on public site.",
+      "name": "test_create_edit_product_visible_publicly (test_tscheck_product_crud.py)",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "POST /api/admin/products 201 created tscheck-product-<id>; PUT /api/admin/products/{id} 200 changed name/category/price/description; GET /api/products/{id} 200 reflects edited fields; GET /api/products?search=<new name> includes the id. Cleaned up with DELETE 200/204."
+    },
+    {
+      "criterion": "Admin can create a product, edit name/description/price/category, change visible on public site.",
+      "name": "admin-create-edit-product-visible-publicly",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Created tscheck-product-<ts> via Add Product form (weight/price/image URL/description), appeared in admin list; edited name/description/price/category via edit form, admin list showed edited values; public /catalogue?search=<edited name> and /product/{id} showed updated name and price 3,300. Cleaned up via admin delete, row confirmed gone."
+    },
+    {
+      "criterion": "Hiding removes product from public site but keeps it in admin; deleting removes it entirely.",
+      "name": "test_hide_then_delete_product (test_tscheck_product_hide_delete.py)",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "Created product, published=true visible at GET /api/products/{id} 200; PUT published=false -> still 200, still listed in GET /api/admin/products; GET /api/products/{id} then 404; GET /api/products?search= excludes it; DELETE removes it from admin list."
+    },
+    {
+      "criterion": "Hiding removes product from public site but keeps it in admin; deleting removes it entirely.",
+      "name": "admin-hide-and-delete-product",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Created tscheck-hide-<ts>, confirmed visible at /product/{id}; toggled publish off via admin-toggle-publish-{id}, admin-status showed 'Hidden', row still listed; /product/{id} no longer showed product name (404 network call observed in console); deleted via admin-delete-{id}, row count 0 after."
+    },
+    {
+      "criterion": "Admin can update gold/silver rates; new values appear on public site immediately.",
+      "name": "test_update_rates_visible_publicly (test_tscheck_rates_update.py)",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "PUT /api/admin/settings with new gold_24k/silver_999 -> 200; GET /api/settings immediately reflects new numeric values; original rates restored and re-verified via a follow-up PUT/GET in the same test."
+    },
+    {
+      "criterion": "Admin can update gold/silver rates; new values appear on public site immediately.",
+      "name": "admin-update-rates-reflects-publicly",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "Set distinct 24K Gold / 999 Silver values in admin Rates tab (awaited the PUT response), reloaded home page: rates-strip contained both new values. Confirmed 'Rates are indicative and may change' disclaimer text present on the site. Restored original rates (74500 / 9450) and verified via GET /api/settings that they matched exactly."
+    },
+    {
+      "criterion": "Admin can change the admin password securely; new password works for login; old password rejected.",
+      "name": "test_wrong_current_password_rejected / test_change_password_then_restore (test_tscheck_change_password.py)",
+      "lane": "backend",
+      "status": "passed",
+      "evidence": "POST /api/auth/change-password with wrong current_password -> 400/401, original password still logs in 200. Correct current + new (>=8 chars) -> 200, caller session still valid (GET /auth/me 200); old password login -> 401; new password login -> 200. Test restores original password in a finally block and re-verifies with a final login call."
+    },
+    {
+      "criterion": "Admin can change the admin password securely; new password works for login; old password rejected.",
+      "name": "admin-change-password-flow",
+      "lane": "browser",
+      "status": "passed",
+      "evidence": "In Website Settings, wrong current password produced a non-2xx /api/auth/change-password response and no change; correct current + new password (TscheckTemp123!) succeeded, stayed signed in; logout+login with old password (Mahesh@2026) failed to reach /admin; login with new password succeeded; restored original password and confirmed via a direct POST /api/auth/login (200) that Mahesh@2026 works again."
+    }
+  ]
+}
