@@ -17,8 +17,8 @@ const CATEGORIES = [
   { label: "Silver Jewellery", to: "/catalogue?metal=silver", img: "https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?crop=entropy&cs=srgb&fm=jpg&w=600&q=75" },
   { label: "925 Sterling Silver", to: "/catalogue?purity=925", img: "https://images.unsplash.com/photo-1583937443566-6fe1a1c6e400?crop=entropy&cs=srgb&fm=jpg&w=600&q=75" },
   { label: "999 Fine Silver", to: "/catalogue?purity=999", img: "https://images.unsplash.com/photo-1720637594911-fb18f28eb913?crop=entropy&cs=srgb&fm=jpg&w=600&q=75" },
-  { label: "Men's Jewellery", to: "/catalogue?gender=men", img: "https://images.unsplash.com/photo-1721807644561-9efcabee5c42?crop=entropy&cs=srgb&fm=jpg&w=600&q=75" },
-  { label: "Women's Jewellery", to: "/catalogue?gender=women", img: "https://images.unsplash.com/photo-1697713465161-d872b22723a2?crop=entropy&cs=srgb&fm=jpg&w=600&q=75" },
+  { label: "Men's Jewellery", to: "/catalogue?gender=men", img: "/categories/mens-jewellery.png" },
+  { label: "Women's Jewellery", to: "/catalogue?gender=women", img: "/categories/womens-jewellery.png" },
 ];
 
 export default function Home() {

@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router-dom";
 import { Toaster } from "@/components/ui/sonner";
+import ScrollToTop from "@/components/ScrollToTop";
 import Home from "@/pages/Home";
 import Catalogue from "@/pages/Catalogue";
 import ProductDetail from "@/pages/ProductDetail";
@@ -12,6 +13,7 @@ import Admin from "@/pages/Admin";
 export default function App() {
   return (
     <>
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/catalogue" element={<Catalogue />} />

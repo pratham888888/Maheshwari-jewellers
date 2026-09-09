@@ -130,18 +130,18 @@ export function Header() {
                 }
               />
               <SheetContent side="right" showCloseButton={false} className="w-[86vw] sm:w-80 bg-[#FAF7F2] p-0">
-                <div className="flex items-center justify-between px-5 h-16 border-b border-[#E8E2D8]">
+                <div className="flex items-center justify-between px-6 h-16 border-b border-[#E8E2D8]">
                   <SheetTitle className="font-heading text-lg">Menu</SheetTitle>
                   <Button variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label="Close navigation menu" data-testid="mobile-menu-close">
                     <X className="h-5 w-5" />
                   </Button>
                 </div>
-                <nav className="flex flex-col p-5 gap-4" data-testid="mobile-nav">
+                <nav className="flex flex-col px-6 py-5 gap-3.5" data-testid="mobile-nav">
                   {NAV.map((n) => link(n.to, n.label, "mnav", () => setOpen(false)))}
                   <Link
                     to="/admin/login"
                     onClick={() => setOpen(false)}
-                    className="text-sm text-stone-500 pt-3 border-t border-[#E8E2D8]"
+                    className="text-sm text-stone-500 pt-4 mt-1 border-t border-[#E8E2D8]"
                     data-testid="nav-admin"
                   >
                     Admin Login

@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 def _now() -> datetime:
@@ -23,12 +23,24 @@ class ProductImage(BaseModel):
     alt: str = ""
 
 
+def _dedupe_names(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for raw in values:
+        name = (raw or "").strip()
+        if name and name not in seen:
+            seen.add(name)
+            out.append(name)
+    return out
+
+
 class ProductBase(BaseModel):
     name: str
     sku: str = ""
     metal: Literal["gold", "silver"] = "silver"
     purity: str = ""  # "925", "999", "regular", "22K", "18K"
-    category: str = ""
+    category: str = ""  # primary/legacy single category (kept for backward compatibility)
+    categories: list[str] = Field(default_factory=list)  # multi-category support
     subcategory: str = ""
     weight: str = ""
     price: Optional[float] = None
@@ -44,6 +56,23 @@ class ProductBase(BaseModel):
     published: bool = True
     is_demo: bool = False
     images: list[ProductImage] = Field(default_factory=list)
+    # Denormalized rating summary (updated when reviews change)
+    rating_average: float = 0.0
+    rating_count: int = 0
+
+    @model_validator(mode="after")
+    def sync_categories(self) -> "ProductBase":
+        cats = _dedupe_names(list(self.categories or []))
+        primary = (self.category or "").strip()
+        if not cats and primary:
+            cats = [primary]
+        if primary and primary not in cats:
+            cats = [primary, *cats]
+        if cats and not primary:
+            primary = cats[0]
+        self.categories = cats
+        self.category = primary
+        return self
 
 
 class ProductCreate(ProductBase):
@@ -122,3 +151,30 @@ class UploadResult(BaseModel):
 
 class OkResponse(BaseModel):
     ok: bool = True
+
+
+class ReviewCreate(BaseModel):
+    rating: int = Field(ge=1, le=5)
+    text: str = Field(default="", max_length=2000)
+    reviewer_name: str = Field(default="", max_length=80)
+
+    @field_validator("text", "reviewer_name")
+    @classmethod
+    def strip_text(cls, value: str) -> str:
+        return (value or "").strip()
+
+
+class Review(BaseModel):
+    id: str = Field(default_factory=_uid)
+    product_id: str
+    rating: int = Field(ge=1, le=5)
+    text: str = ""
+    reviewer_name: str = ""
+    created_at: datetime = Field(default_factory=_now)
+
+
+class ReviewPage(BaseModel):
+    items: list[Review]
+    total: int
+    average: float = 0.0
+    count: int = 0

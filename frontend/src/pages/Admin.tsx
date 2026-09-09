@@ -18,9 +18,10 @@ import type {
   Product,
   ProductInput,
   ProductPage,
+  ReviewPage,
   Settings,
 } from "@/lib/types";
-import { emptyProduct } from "@/lib/types";
+import { emptyProduct, normalizeCategories } from "@/lib/types";
 import { FALLBACK_SETTINGS, PURITY_LABELS, priceLabel, useSeo } from "@/lib/site";
 
 type View = { mode: "list" } | { mode: "create" } | { mode: "edit"; product: Product };
@@ -123,6 +124,24 @@ export default function Admin() {
     },
   });
 
+  const reviews = useQuery({
+    queryKey: ["admin-reviews"],
+    queryFn: () => apiGet<ReviewPage>("/admin/reviews?page_size=100"),
+    enabled: me.isSuccess,
+  });
+
+  const removeReview = useMutation({
+    mutationFn: (id: string) => apiDelete<OkResponse>(`/admin/reviews/${id}`),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin-reviews"] });
+      qc.invalidateQueries({ queryKey: ["reviews"] });
+      qc.invalidateQueries({ queryKey: ["products"] });
+      qc.invalidateQueries({ queryKey: ["admin-products"] });
+      toast.success("Review deleted");
+    },
+    onError: () => toast.error("Could not delete review"),
+  });
+
   const saveSettings = useMutation({
     mutationFn: (s: Settings) => apiPut<Settings>("/admin/settings", s),
     onSuccess: (s) => {
@@ -195,6 +214,7 @@ export default function Admin() {
             <TabsTrigger value="dashboard" data-testid="tab-dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="products" data-testid="tab-products">Products</TabsTrigger>
             <TabsTrigger value="categories" data-testid="tab-categories">Categories</TabsTrigger>
+            <TabsTrigger value="reviews" data-testid="tab-reviews">Reviews</TabsTrigger>
             <TabsTrigger value="rates" data-testid="tab-rates">Gold/Silver Rates</TabsTrigger>
             <TabsTrigger value="settings" data-testid="tab-settings">Website Settings</TabsTrigger>
           </TabsList>
@@ -255,7 +275,7 @@ export default function Admin() {
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-sm text-stone-900 truncate">{p.name}</p>
                         <p className="text-xs text-stone-500 truncate">
-                          {p.sku} · {PURITY_LABELS[p.purity] ?? p.purity} · {p.weight || "—"} · {priceLabel(p)}
+                          {p.sku} · {normalizeCategories(p).join(", ") || "—"} · {PURITY_LABELS[p.purity] ?? p.purity} · {p.weight || "—"} · {priceLabel(p)}
                         </p>
                         <div className="mt-1 flex flex-wrap gap-1">
                           <Badge variant={p.published ? "secondary" : "outline"} className="text-[10px]" data-testid={`admin-status-${p.id}`}>
@@ -381,6 +401,47 @@ export default function Admin() {
                     </button>
                   </span>
                 ))}
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* Reviews moderation */}
+          <TabsContent value="reviews" className="mt-6">
+            <div className="bg-white rounded-xl border border-[#E8E2D8] p-6" data-testid="admin-reviews-panel">
+              <h2 className="font-heading text-lg text-stone-900">Customer reviews</h2>
+              <p className="mt-1 text-sm text-stone-500">
+                Remove inappropriate reviews. Deleting a review recalculates the product average.
+              </p>
+              <div className="mt-5 space-y-3" data-testid="admin-reviews-list">
+                {(reviews.data?.items ?? []).length === 0 ? (
+                  <p className="text-sm text-stone-500">No reviews yet.</p>
+                ) : (
+                  (reviews.data?.items ?? []).map((r) => (
+                    <div
+                      key={r.id}
+                      className="flex flex-col sm:flex-row sm:items-start gap-3 border border-[#E8E2D8] rounded-lg p-3"
+                      data-testid={`admin-review-${r.id}`}
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-stone-900">
+                          {r.reviewer_name || "Customer"} · {r.rating}/5
+                        </p>
+                        <p className="text-xs text-stone-500 mt-0.5">Product ID: {r.product_id}</p>
+                        {r.text && <p className="mt-2 text-sm text-stone-700 whitespace-pre-line">{r.text}</p>}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="text-red-700 border-red-200 hover:bg-red-50 shrink-0"
+                        onClick={() => removeReview.mutate(r.id)}
+                        data-testid={`admin-delete-review-${r.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" /> Delete
+                      </Button>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           </TabsContent>
@@ -521,5 +582,17 @@ export default function Admin() {
 
 function toInput(p: Product): ProductInput {
   const { id: _id, created_at: _c, updated_at: _u, ...rest } = p;
-  return rest;
+  const categories =
+    rest.categories?.length > 0
+      ? rest.categories
+      : rest.category
+        ? [rest.category]
+        : [];
+  return {
+    ...rest,
+    categories,
+    category: categories[0] ?? rest.category ?? "",
+    rating_average: rest.rating_average ?? 0,
+    rating_count: rest.rating_count ?? 0,
+  };
 }

@@ -30,11 +30,18 @@ from models.catalogue import (
     Product,
     ProductCreate,
     ProductPage,
+    Review,
+    ReviewPage,
     Settings,
     UploadResult,
 )
-from routers.catalogue import _aware, build_query, load_settings
-
+from routers.catalogue import (
+    _aware,
+    _normalize_product_doc,
+    build_query,
+    load_settings,
+    refresh_product_rating_summary,
+)
 router = APIRouter()
 
 
@@ -107,7 +114,10 @@ async def admin_list_products(
         .to_list(page_size)
     )
     return ProductPage(
-        items=[Product(**_aware(d)) for d in docs], total=total, page=page, page_size=page_size
+        items=[Product(**_aware(_normalize_product_doc(d))) for d in docs],
+        total=total,
+        page=page,
+        page_size=page_size,
     )
 
 
@@ -116,7 +126,7 @@ async def admin_get_product(product_id: str, _: str = Depends(require_admin)):
     doc = await db.products.find_one({"id": product_id}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Product not found")
-    return Product(**_aware(doc))
+    return Product(**_aware(_normalize_product_doc(doc)))
 
 
 @router.post("/admin/products", response_model=Product)
@@ -136,10 +146,13 @@ async def update_product(
     if not existing:
         raise HTTPException(status_code=404, detail="Product not found")
     data = payload.model_dump()
+    # Preserve denormalized rating fields from existing document
+    data["rating_average"] = float(existing.get("rating_average") or 0)
+    data["rating_count"] = int(existing.get("rating_count") or 0)
     data["updated_at"] = datetime.now(timezone.utc)
     await db.products.update_one({"id": product_id}, {"$set": data})
     doc = await db.products.find_one({"id": product_id}, {"_id": 0})
-    return Product(**_aware(doc))
+    return Product(**_aware(_normalize_product_doc(doc)))
 
 
 @router.delete("/admin/products/{product_id}", response_model=OkResponse)
@@ -147,6 +160,7 @@ async def delete_product(product_id: str, _: str = Depends(require_admin)):
     result = await db.products.delete_one({"id": product_id})
     if result.deleted_count == 0:
         raise HTTPException(status_code=404, detail="Product not found")
+    await db.reviews.delete_many({"product_id": product_id})
     return OkResponse()
 
 
@@ -180,6 +194,45 @@ async def update_settings(payload: Settings, _: str = Depends(require_admin)):
         {"key": "site"}, {"$set": {"key": "site", **payload.model_dump()}}, upsert=True
     )
     return await load_settings()
+
+
+# ---------- reviews (admin moderation) ----------
+
+
+@router.get("/admin/reviews", response_model=ReviewPage)
+async def admin_list_reviews(
+    product_id: Optional[str] = None,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=100),
+    _: str = Depends(require_admin),
+):
+    query: dict = {}
+    if product_id:
+        query["product_id"] = product_id
+    total = await db.reviews.count_documents(query)
+    docs = (
+        await db.reviews.find(query, {"_id": 0})
+        .sort([("created_at", -1)])
+        .skip((page - 1) * page_size)
+        .limit(page_size)
+        .to_list(page_size)
+    )
+    items: list[Review] = []
+    for d in docs:
+        if isinstance(d.get("created_at"), datetime) and d["created_at"].tzinfo is None:
+            d["created_at"] = d["created_at"].replace(tzinfo=timezone.utc)
+        items.append(Review(**d))
+    return ReviewPage(items=items, total=total, average=0.0, count=total)
+
+
+@router.delete("/admin/reviews/{review_id}", response_model=OkResponse)
+async def admin_delete_review(review_id: str, _: str = Depends(require_admin)):
+    doc = await db.reviews.find_one({"id": review_id}, {"_id": 0})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Review not found")
+    await db.reviews.delete_one({"id": review_id})
+    await refresh_product_rating_summary(str(doc["product_id"]))
+    return OkResponse()
 
 
 # ---------- images ----------

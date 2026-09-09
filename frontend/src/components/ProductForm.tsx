@@ -108,18 +108,41 @@ export default function ProductForm({
             )}
           </select>
         </div>
-        <div className={field}>
-          <Label htmlFor="p-category">Category</Label>
-          <select id="p-category" className={selectCls} value={value.category} onChange={(e) => set("category", e.target.value)} data-testid="product-form-category">
-            <option value="">Select a category</option>
+        <div className={field + " sm:col-span-2"}>
+          <Label>Categories</Label>
+          <p className="text-xs text-stone-500 mb-2">
+            Select one or more categories. The product will appear under each selected category.
+          </p>
+          <div
+            className="max-h-44 overflow-y-auto rounded-md border border-[#E8E2D8] bg-white p-3 grid sm:grid-cols-2 gap-2"
+            data-testid="product-form-categories"
+          >
             {categories
               .filter((c) => c.metal === "both" || c.metal === value.metal)
-              .map((c) => (
-                <option key={c.id} value={c.name}>
-                  {c.name}
-                </option>
-              ))}
-          </select>
+              .map((c) => {
+                const checked = (value.categories ?? []).includes(c.name) || value.category === c.name;
+                return (
+                  <label key={c.id} className="flex items-center gap-2 text-sm text-stone-800 cursor-pointer">
+                    <Checkbox
+                      checked={checked}
+                      onCheckedChange={(on) => {
+                        const current = new Set(value.categories?.length ? value.categories : value.category ? [value.category] : []);
+                        if (on) current.add(c.name);
+                        else current.delete(c.name);
+                        const next = Array.from(current);
+                        onChange({
+                          ...value,
+                          categories: next,
+                          category: next[0] ?? "",
+                        });
+                      }}
+                      data-testid={`product-form-category-${c.slug}`}
+                    />
+                    <span>{c.name}</span>
+                  </label>
+                );
+              })}
+          </div>
         </div>
         <div className={field}>
           <Label htmlFor="p-sub">Subcategory</Label>

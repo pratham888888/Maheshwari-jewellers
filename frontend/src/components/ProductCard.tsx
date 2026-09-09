@@ -11,6 +11,7 @@ import {
 } from "@/lib/site";
 import type { Product } from "@/lib/types";
 import { resolveMediaUrl } from "@/lib/api";
+import { ProductRatingSummary } from "@/components/ProductRating";
 import { cn } from "@/lib/utils";
 
 const PLACEHOLDER =
@@ -73,6 +74,7 @@ export default function ProductCard({ product }: { product: Product }) {
         <p className="text-sm font-semibold text-[#996515] mt-0.5" data-testid={`product-price-${product.id}`}>
           {priceLabel(product)}
         </p>
+        <ProductRatingSummary average={product.rating_average ?? 0} count={product.rating_count ?? 0} compact />
         <p className="text-xs text-stone-500" data-testid={`product-availability-${product.id}`}>
           {AVAILABILITY_LABELS[product.availability]}
         </p>
@@ -80,7 +82,10 @@ export default function ProductCard({ product }: { product: Product }) {
         <div className="mt-auto pt-3 grid grid-cols-2 gap-2">
           <Link
             to={`/product/${product.id}`}
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "w-full text-xs")}
+            className={cn(
+              buttonVariants({ variant: "outline", size: "sm" }),
+              "w-full text-xs px-3 py-2.5 h-auto min-h-10",
+            )}
             data-testid={`view-details-${product.id}`}
           >
             View Details
@@ -89,7 +94,7 @@ export default function ProductCard({ product }: { product: Product }) {
             href={waLink(s.whatsapp, productEnquiryMessage(product))}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center rounded-md bg-[#25D366] px-2 py-2 text-xs font-semibold text-white transition-opacity duration-200 hover:opacity-90"
+            className="inline-flex items-center justify-center rounded-md bg-[#25D366] px-3 py-2.5 text-xs font-semibold text-white transition-opacity duration-200 hover:opacity-90 min-h-10"
             data-testid={`whatsapp-enquiry-${product.id}`}
           >
             WhatsApp

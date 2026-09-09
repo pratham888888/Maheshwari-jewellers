@@ -80,5 +80,49 @@ async def ensure_business_defaults() -> None:
             ]
             await db.categories.insert_many(docs)
             logger.info("ensure_business_defaults: seeded %d categories", len(docs))
+
+        await migrate_product_categories()
     except Exception as exc:  # never block boot
         logger.error("ensure_business_defaults failed: %s", exc)
+
+
+async def migrate_product_categories() -> None:
+    """Idempotent: copy legacy category string into categories[] without changing ids."""
+    cursor = db.products.find(
+        {
+            "$or": [
+                {"categories": {"$exists": False}},
+                {"categories": None},
+                {"categories": {"$size": 0}, "category": {"$nin": [None, ""]}},
+            ]
+        },
+        {"_id": 0, "id": 1, "category": 1, "categories": 1},
+    )
+    updated = 0
+    async for doc in cursor:
+        primary = str(doc.get("category") or "").strip()
+        existing = doc.get("categories")
+        cats = [str(c).strip() for c in existing] if isinstance(existing, list) else []
+        cats = [c for c in cats if c]
+        if not cats and primary:
+            cats = [primary]
+        elif primary and primary not in cats:
+            cats = [primary, *cats]
+        if not cats:
+            continue
+        await db.products.update_one(
+            {"id": doc["id"]},
+            {
+                "$set": {
+                    "categories": cats,
+                    "category": primary or cats[0],
+                }
+            },
+        )
+        await db.products.update_one(
+            {"id": doc["id"], "rating_count": {"$exists": False}},
+            {"$set": {"rating_average": 0.0, "rating_count": 0}},
+        )
+        updated += 1
+    if updated:
+        logger.info("migrate_product_categories: normalized %d products", updated)

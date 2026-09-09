@@ -17,6 +17,7 @@ export interface Product {
   metal: Metal;
   purity: string;
   category: string;
+  categories: string[];
   subcategory: string;
   weight: string;
   price: number | null;
@@ -32,6 +33,8 @@ export interface Product {
   published: boolean;
   is_demo: boolean;
   images: ProductImage[];
+  rating_average: number;
+  rating_count: number;
   created_at: string;
   updated_at: string;
 }
@@ -91,12 +94,48 @@ export interface OkResponse {
   ok: boolean;
 }
 
+export interface Review {
+  id: string;
+  product_id: string;
+  rating: number;
+  text: string;
+  reviewer_name: string;
+  created_at: string;
+}
+
+export interface ReviewPage {
+  items: Review[];
+  total: number;
+  average: number;
+  count: number;
+}
+
+export interface ReviewInput {
+  rating: number;
+  text: string;
+  reviewer_name: string;
+}
+
+/** Display stars only when there is at least one review and average is strictly greater than 3. */
+export function shouldShowRating(average: number, count: number): boolean {
+  return count > 0 && average > 3;
+}
+
+export function normalizeCategories(product: Pick<Product, "category" | "categories">): string[] {
+  const fromList = (product.categories ?? []).map((c) => c.trim()).filter(Boolean);
+  const primary = (product.category ?? "").trim();
+  if (fromList.length === 0 && primary) return [primary];
+  if (primary && !fromList.includes(primary)) return [primary, ...fromList];
+  return fromList;
+}
+
 export const emptyProduct = (): ProductInput => ({
   name: "",
   sku: "",
   metal: "silver",
   purity: "925",
   category: "",
+  categories: [],
   subcategory: "",
   weight: "",
   price: null,
@@ -112,4 +151,6 @@ export const emptyProduct = (): ProductInput => ({
   published: true,
   is_demo: false,
   images: [],
+  rating_average: 0,
+  rating_count: 0,
 });

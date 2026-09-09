@@ -1,4 +1,4 @@
-"""Public catalogue routes — products, categories, settings/rates (read-only)."""
+"""Public catalogue routes — products, categories, settings/rates, reviews."""
 
 from datetime import datetime, timezone
 from typing import Optional
@@ -6,7 +6,15 @@ from typing import Optional
 from fastapi import APIRouter, HTTPException, Query
 
 from lib.db import db
-from models.catalogue import Category, Product, ProductPage, Settings
+from models.catalogue import (
+    Category,
+    Product,
+    ProductPage,
+    Review,
+    ReviewCreate,
+    ReviewPage,
+    Settings,
+)
 
 router = APIRouter()
 
@@ -16,6 +24,26 @@ def _aware(doc: dict) -> dict:
         value = doc.get(key)
         if isinstance(value, datetime) and value.tzinfo is None:
             doc[key] = value.replace(tzinfo=timezone.utc)
+    return doc
+
+
+def _normalize_product_doc(doc: dict) -> dict:
+    """Ensure categories[] exists for legacy single-category documents."""
+    cats = doc.get("categories")
+    if not isinstance(cats, list):
+        cats = []
+    cats = [str(c).strip() for c in cats if str(c).strip()]
+    primary = str(doc.get("category") or "").strip()
+    if not cats and primary:
+        cats = [primary]
+    if primary and primary not in cats:
+        cats = [primary, *cats]
+    if cats and not primary:
+        primary = cats[0]
+    doc["categories"] = cats
+    doc["category"] = primary
+    doc.setdefault("rating_average", 0.0)
+    doc.setdefault("rating_count", 0)
     return doc
 
 
@@ -42,6 +70,8 @@ def build_query(
     published_only: bool,
 ) -> dict:
     query: dict = {}
+    and_clauses: list[dict] = []
+
     if published_only:
         query["published"] = True
     if metal:
@@ -50,21 +80,37 @@ def build_query(
         query["purity"] = purity
     if gender:
         query["gender"] = gender
-    if category:
-        query["category"] = category
     if availability:
         query["availability"] = availability
     if featured is not None:
         query["featured"] = featured
     if new_arrival is not None:
         query["new_arrival"] = new_arrival
+
+    if category:
+        # Match legacy single field OR multi-category array (one product, never duplicated).
+        and_clauses.append(
+            {
+                "$or": [
+                    {"category": category},
+                    {"categories": category},
+                ]
+            }
+        )
+
     if search:
-        query["$or"] = [
-            {"name": {"$regex": search, "$options": "i"}},
-            {"sku": {"$regex": search, "$options": "i"}},
-            {"description": {"$regex": search, "$options": "i"}},
-            {"category": {"$regex": search, "$options": "i"}},
-        ]
+        and_clauses.append(
+            {
+                "$or": [
+                    {"name": {"$regex": search, "$options": "i"}},
+                    {"sku": {"$regex": search, "$options": "i"}},
+                    {"description": {"$regex": search, "$options": "i"}},
+                    {"category": {"$regex": search, "$options": "i"}},
+                    {"categories": {"$regex": search, "$options": "i"}},
+                ]
+            }
+        )
+
     price_filter: dict = {}
     if min_price is not None:
         price_filter["$gte"] = min_price
@@ -72,7 +118,36 @@ def build_query(
         price_filter["$lte"] = max_price
     if price_filter:
         query["price"] = price_filter
+
+    if and_clauses:
+        query["$and"] = and_clauses
     return query
+
+
+async def refresh_product_rating_summary(product_id: str) -> None:
+    pipeline = [
+        {"$match": {"product_id": product_id}},
+        {
+            "$group": {
+                "_id": "$product_id",
+                "count": {"$sum": 1},
+                "average": {"$avg": "$rating"},
+            }
+        },
+    ]
+    rows = await db.reviews.aggregate(pipeline).to_list(1)
+    if not rows:
+        await db.products.update_one(
+            {"id": product_id},
+            {"$set": {"rating_average": 0.0, "rating_count": 0}},
+        )
+        return
+    average = float(rows[0]["average"] or 0)
+    count = int(rows[0]["count"] or 0)
+    await db.products.update_one(
+        {"id": product_id},
+        {"$set": {"rating_average": round(average, 2), "rating_count": count}},
+    )
 
 
 @router.get("/products", response_model=ProductPage)
@@ -102,7 +177,10 @@ async def list_products(
     cursor = db.products.find(query, {"_id": 0}).sort(sort_spec).skip((page - 1) * page_size).limit(page_size)
     docs = await cursor.to_list(page_size)
     return ProductPage(
-        items=[Product(**_aware(d)) for d in docs], total=total, page=page, page_size=page_size
+        items=[Product(**_aware(_normalize_product_doc(d))) for d in docs],
+        total=total,
+        page=page,
+        page_size=page_size,
     )
 
 
@@ -111,7 +189,59 @@ async def get_product(product_id: str):
     doc = await db.products.find_one({"id": product_id, "published": True}, {"_id": 0})
     if not doc:
         raise HTTPException(status_code=404, detail="Product not found")
-    return Product(**_aware(doc))
+    return Product(**_aware(_normalize_product_doc(doc)))
+
+
+@router.get("/products/{product_id}/reviews", response_model=ReviewPage)
+async def list_reviews(
+    product_id: str,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=50),
+):
+    product = await db.products.find_one({"id": product_id, "published": True}, {"_id": 0, "id": 1})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    query = {"product_id": product_id}
+    total = await db.reviews.count_documents(query)
+    docs = (
+        await db.reviews.find(query, {"_id": 0})
+        .sort([("created_at", -1)])
+        .skip((page - 1) * page_size)
+        .limit(page_size)
+        .to_list(page_size)
+    )
+    average = 0.0
+    if total:
+        pipeline = [
+            {"$match": query},
+            {"$group": {"_id": None, "average": {"$avg": "$rating"}}},
+        ]
+        rows = await db.reviews.aggregate(pipeline).to_list(1)
+        average = round(float(rows[0]["average"]), 2) if rows else 0.0
+    items = []
+    for d in docs:
+        if isinstance(d.get("created_at"), datetime) and d["created_at"].tzinfo is None:
+            d["created_at"] = d["created_at"].replace(tzinfo=timezone.utc)
+        items.append(Review(**d))
+    return ReviewPage(items=items, total=total, average=average, count=total)
+
+
+@router.post("/products/{product_id}/reviews", response_model=Review)
+async def create_review(product_id: str, payload: ReviewCreate):
+    product = await db.products.find_one({"id": product_id, "published": True}, {"_id": 0, "id": 1})
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+    if payload.rating < 1 or payload.rating > 5:
+        raise HTTPException(status_code=422, detail="Rating must be between 1 and 5")
+    review = Review(
+        product_id=product_id,
+        rating=payload.rating,
+        text=payload.text[:2000],
+        reviewer_name=(payload.reviewer_name or "Customer")[:80],
+    )
+    await db.reviews.insert_one(review.model_dump())
+    await refresh_product_rating_summary(product_id)
+    return review
 
 
 @router.get("/categories", response_model=list[Category])
