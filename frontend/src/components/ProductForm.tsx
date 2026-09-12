@@ -102,6 +102,7 @@ export default function ProductForm({
               <>
                 <option value="24K">24K Gold</option>
                 <option value="22K">22K Gold</option>
+                <option value="20K">20K Gold</option>
                 <option value="18K">18K Gold</option>
                 <option value="14K">14K Gold</option>
               </>

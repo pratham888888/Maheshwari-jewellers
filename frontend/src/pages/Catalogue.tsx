@@ -23,8 +23,11 @@ const PURITIES = [
   { value: "regular", label: "Regular Silver" },
   { value: "925", label: "925 Sterling" },
   { value: "999", label: "999 Fine" },
+  { value: "24K", label: "24K Gold" },
   { value: "22K", label: "22K Gold" },
+  { value: "20K", label: "20K Gold" },
   { value: "18K", label: "18K Gold" },
+  { value: "14K", label: "14K Gold" },
 ];
 const GENDERS = [
   { value: "", label: "Everyone" },
@@ -33,7 +36,7 @@ const GENDERS = [
   { value: "unisex", label: "Unisex" },
 ];
 const SILVER_PURITIES = ["regular", "925", "999"];
-const GOLD_PURITIES = ["24K", "22K", "18K", "14K"];
+const GOLD_PURITIES = ["24K", "22K", "20K", "18K", "14K"];
 const AVAILABILITIES = [
   { value: "", label: "Any" },
   { value: "in_stock", label: "In Stock" },

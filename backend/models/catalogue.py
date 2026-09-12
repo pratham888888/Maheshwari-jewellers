@@ -38,7 +38,7 @@ class ProductBase(BaseModel):
     name: str
     sku: str = ""
     metal: Literal["gold", "silver"] = "silver"
-    purity: str = ""  # "925", "999", "regular", "22K", "18K"
+    purity: str = ""  # "925", "999", "regular", "24K", "22K", "20K", "18K", "14K"
     category: str = ""  # primary/legacy single category (kept for backward compatibility)
     categories: list[str] = Field(default_factory=list)  # multi-category support
     subcategory: str = ""

@@ -56,6 +56,7 @@ export const PURITY_LABELS: Record<string, string> = {
   regular: "Regular Silver",
   "24K": "24K Gold",
   "22K": "22K Gold",
+  "20K": "20K Gold",
   "18K": "18K Gold",
   "14K": "14K Gold",
 };
